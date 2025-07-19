@@ -626,88 +626,87 @@ end)
 
 --Yeni Ölümsüzlük 2 saatimi aldı v2
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local remote = game.Workspace:WaitForChild("Remote")
+---
 
-local toggle = false
-local immortalityLoop = nil
+---
 
--- Sadece Prison Life ise devam et
-if game.PlaceId == 155615604 then
-	-- GUI Oluştur
-	local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-	screenGui.Name = "HilalWareGui"
-	screenGui.ResetOnSpawn = false
+---
 
-	-- Sekme Çerçevesi
-	local oyunSekmesi = Instance.new("Frame", screenGui)
-	oyunSekmesi.Name = "OyunSekmesi"
-	oyunSekmesi.Size = UDim2.new(0, 250, 0, 150)
-	oyunSekmesi.Position = UDim2.new(0, 20, 0.5, -75)
-	oyunSekmesi.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	oyunSekmesi.BorderSizePixel = 0
+---
 
-	local title = Instance.new("TextLabel", oyunSekmesi)
-	title.Size = UDim2.new(1, 0, 0, 30)
-	title.Text = "HilalWare | Oyun Sekmesi"
-	title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	title.TextColor3 = Color3.fromRGB(255, 255, 255)
-	title.Font = Enum.Font.SourceSansBold
-	title.TextScaled = true
+---
 
-	-- Ölümsüzlük Butonu
-	local button = Instance.new("TextButton", oyunSekmesi)
-	button.Size = UDim2.new(1, -20, 0, 40)
-	button.Position = UDim2.new(0, 10, 0, 50)
-	button.Text = "Ölümsüzlük: KAPALI"
-	button.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Font = Enum.Font.SourceSans
-	button.TextScaled = true
+---
 
-	-- Ölümsüzlük Sistemi
-	local function startImmortality()
-		toggle = true
-		button.Text = "Ölümsüzlük: AÇIK"
-		button.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+if game.PlaceId == 155615604 then -- Sadece Prison Life'da çalışsın
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local remote = game.Workspace:WaitForChild("Remote")
+    
+    local savedCFrame = nil
+    local immortalityOn = false
+    local immortalityLoop = nil
 
-		immortalityLoop = task.spawn(function()
-			while toggle do
-				task.wait(2)
+    -- Ölümsüzlük Aç
+    local function startImmortality()
+        immortalityOn = true
+        immortalityLoop = task.spawn(function()
+            while immortalityOn do
+                task.wait(2)
 
-				local savedCFrame = nil
-				if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-					savedCFrame = player.Character.HumanoidRootPart.CFrame
-				end
+                -- Konumu kaydet
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    savedCFrame = player.Character.HumanoidRootPart.CFrame
+                end
 
-				remote.TeamEvent:FireServer("Bright orange")
+                -- Takımı tekrar ayarla (respawn tetikler)
+                remote.TeamEvent:FireServer("Bright orange")
 
-				local newChar = player.CharacterAdded:Wait()
-				local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
+                -- Yeni karakter geldiyse eski konuma ışınla
+                local newChar = player.CharacterAdded:Wait()
+                local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
+                if hrp and savedCFrame then
+                    hrp.CFrame = savedCFrame
+                end
 
-				if hrp and savedCFrame then
-					hrp.CFrame = savedCFrame
-				end
-			end
-		end)
-	end
+                -- Konumu sıfırla
+                savedCFrame = nil
+            end
+        end)
+    end
 
-	local function stopImmortality()
-		toggle = false
-		button.Text = "Ölümsüzlük: KAPALI"
-		button.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-		if immortalityLoop then
-			task.cancel(immortalityLoop)
-		end
-	end
+    -- Ölümsüzlük Kapat
+    local function stopImmortality()
+        immortalityOn = false
+        if immortalityLoop then
+            task.cancel(immortalityLoop)
+        end
+    end
 
-	-- Aç/Kapa
-	button.MouseButton1Click:Connect(function()
-		if toggle then
-			stopImmortality()
-		else
-			startImmortality()
-		end
-	end)
+    -- GUI ve Buton Oluştur
+    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+    ScreenGui.Name = "ImmortalityGui"
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 200, 0, 50)
+    button.Position = UDim2.new(0.5, -100, 0.8, 0)
+    button.Text = "Ölümsüzlük: Kapalı"
+    button.Parent = ScreenGui
+    button.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 22
+
+    button.MouseButton1Click:Connect(function()
+        immortalityOn = not immortalityOn
+        if immortalityOn then
+            button.Text = "Ölümsüzlük: Açık"
+            button.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
+            startImmortality()
+        else
+            button.Text = "Ölümsüzlük: Kapalı"
+            button.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+            stopImmortality()
+        end
+    end)
 end
