@@ -1,9 +1,15 @@
+-- Servisleri tanımlama
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+
+-- Değişkenler
+local player = Players.LocalPlayer
+local PRISON_LIFE_ID = 155615604 -- Prison Life oyun ID'si
 
 -- Bildirim gönderme fonksiyonu
 local function gonderBildirim(ayarlar)
@@ -12,23 +18,23 @@ local function gonderBildirim(ayarlar)
     end)
 end
 
--- Global değişkenler (Panelin mevcut durumu ve kayıp boyutları için)
-local isPanelMinimized = false -- Panelin küçültülmüş olup olmadığını takip eder
-local originalPanelSize = UDim2.new(0, 520, 0, 300)
-local originalPanelPosition = UDim2.new(0.5, -260, 0.4, 0) -- Merkezde başlangıç konumu
-local minimizedPanelSize = UDim2.new(0, 150, 0, 40) -- Küçültülmüş panelin boyutu
-local minimizedPanelPosition = UDim2.new(0.5, -75, 0.4, 0) -- Küçültülmüş panelin konumu
+-- Global değişkenler (Panelin durumu için)
+local isPanelMinimized = false
+local originalPanelSize = UDim2.new(0, 520, 0, 320)
+local originalPanelPosition = UDim2.new(0.5, -260, 0.5, -160)
+local minimizedPanelSize = UDim2.new(0, 150, 0, 40)
+local minimizedPanelPosition = UDim2.new(0.5, -75, 0.4, 0)
 
--- ANA KOD
-local player = Players.LocalPlayer
-
+-- ANA ARAYÜZ OLUŞTURMA
 local gui = Instance.new("ScreenGui")
 gui.Name = "HilalWareModern"
 gui.Parent = game.CoreGui
+gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame")
-frame.Size = originalPanelSize -- Başlangıç boyutu
-frame.Position = originalPanelPosition -- Başlangıç konumu
+frame.Size = UDim2.new(0, 0, 0, 0)
+frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.Active = true
 frame.Draggable = true
@@ -37,11 +43,20 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(255, 255, 255)
 stroke.Parent = frame
 
+local logoImage = Instance.new("ImageLabel")
+logoImage.Size = UDim2.new(0, 25, 0, 25)
+logoImage.Position = UDim2.new(0, 10, 0, 5)
+logoImage.BackgroundTransparency = 1
+logoImage.Image = "rbxassetid://70574838265694"
+logoImage.ImageColor3 = Color3.fromRGB(255, 255, 255)
+logoImage.Parent = frame
+
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -20, 0, 30)
-title.Position = UDim2.new(0, 40, 0, 0) -- Başlığın sola doğru kaydırılması için position ayarlaması
+title.Size = UDim2.new(1, -120, 0, 30)
+title.Position = UDim2.new(0, 40, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "HilalWare.Lua"
 title.Font = Enum.Font.GothamBold
@@ -50,16 +65,37 @@ title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
-local logoImage = Instance.new("ImageLabel")
-logoImage.Size = UDim2.new(0, 25, 0, 25) -- Logonun boyutu
-logoImage.Position = UDim2.new(0, 5, 0, 5) -- Başlığın soluna, hafif içeri
-logoImage.BackgroundTransparency = 1
-logoImage.Image = "rbxassetid://70574838265694" -- Belirttiğin logo ID'si
-logoImage.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Logonun rengi (isteğe bağlı olarak değiştirilebilir)
-logoImage.ScaleType = Enum.ScaleType.Fit
-logoImage.Parent = frame
+-- KONTROL BUTONLARI (KAPAT, KÜÇÜLT)
+local controlsFrame = Instance.new("Frame")
+controlsFrame.Size = UDim2.new(0, 80, 0, 30)
+controlsFrame.Position = UDim2.new(1, -85, 0, 5)
+controlsFrame.BackgroundTransparency = 1
+controlsFrame.Parent = frame
 
-local tabs = {"Ana Sayfa", "Hareket", "Görünüm", "Oyun", "Yer", "Eğlence", "Scripts"}
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 25)
+closeButton.Position = UDim2.new(1, -30, 0, 2.5)
+closeButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 14
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Parent = controlsFrame
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 5)
+
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 30, 0, 25)
+minimizeButton.Position = UDim2.new(1, -65, 0, 2.5)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeButton.Text = "_"
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.TextSize = 14
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.Parent = controlsFrame
+Instance.new("UICorner", minimizeButton).CornerRadius = UDim.new(0, 5)
+
+-- SEKME SİSTEMİ
+local tabs = {"Ana Sayfa", "Oyun", "Eğlence", "Hareket", "Görünüm", "Scripts"}
 local tabButtons = {}
 local contentFrames = {}
 
@@ -70,222 +106,60 @@ tabBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 tabBar.Parent = frame
 Instance.new("UICorner", tabBar).CornerRadius = UDim.new(0, 10)
 
+local contentHolder = Instance.new("Frame")
+contentHolder.Size = UDim2.new(1, -130, 1, -50)
+contentHolder.Position = UDim2.new(0, 130, 0, 40)
+contentHolder.BackgroundTransparency = 1
+contentHolder.Parent = frame
+
+for _, tab in ipairs(tabs) do
+    local contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Size = UDim2.new(1, 0, 1, 0)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Visible = false
+    contentFrame.Parent = contentHolder
+    contentFrame.BorderSizePixel = 0
+    contentFrame.ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150)
+    contentFrame.ScrollBarThickness = 5
+    contentFrame.CanvasSize = UDim2.new(0,0,0,0) -- Otomatik boyutlandırma için
+    contentFrames[tab] = contentFrame
+end
+
 local activeTabButton = nil
 local originalButtonColor = Color3.fromRGB(40, 40, 40)
 local activeButtonColor = Color3.fromRGB(70, 70, 70)
 
--- Sekme butonlarını oluşturma
 for i, tab in ipairs(tabs) do
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, 0, 0, 30)
-    button.Position = UDim2.new(0, 0, 0, (i - 1) * 35 + 10)
+    button.Size = UDim2.new(1, -10, 0, 30)
+    button.Position = UDim2.new(0, 5, 0, (i - 1) * 35 + 10)
     button.Text = tab
     button.BackgroundColor3 = originalButtonColor
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Font = Enum.Font.Gotham
     button.TextSize = 14
-    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
     button.Parent = tabBar
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
     tabButtons[tab] = button
 end
 
-local contentHolder = Instance.new("Frame")
-contentHolder.Size = UDim2.new(1, -130, 1, -50) -- Tab bar ve başlık alanı düşülmüş boyut
-contentHolder.Position = UDim2.new(0, 130, 0, 40) -- Tab bar'ın sağına ve başlığın altına yerleşiyor
-contentHolder.BackgroundTransparency = 1
-contentHolder.Parent = frame
-
--- Her sekme için ayrı içerik frame'leri oluşturma
-for _, tab in ipairs(tabs) do
-    local contentFrame = Instance.new("Frame")
-    contentFrame.Size = UDim2.new(1, 0, 1, 0)
-    contentFrame.Position = UDim2.new(0, 0, 0, 0)
-    contentFrame.BackgroundTransparency = 1
-    contentFrame.Visible = false -- Başlangıçta gizli
-    contentFrame.Parent = contentHolder
-    contentFrames[tab] = contentFrame
-end
-
-local ana = contentFrames["Ana Sayfa"] -- Ana sekmenin içeriğini alıyoruz
-local hareketTab = contentFrames["Hareket"] -- Hareket sekmesinin içeriğini alıyoruz
-local oyunTab = contentFrames["Oyun"] -- Oyun sekmesinin içeriğini alıyoruz
-local scriptsTab = contentFrames["Scripts"] -- Scripts sekmesinin içeriğini alıyoruz
-
--- Profil resmi ve bilgiler
-local profileImage = Instance.new("ImageLabel")
-profileImage.Size = UDim2.new(0, 80, 0, 80)
-profileImage.Position = UDim2.new(0, 10, 0, 10)
-profileImage.BackgroundTransparency = 1
-profileImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=100&height=100&format=png"
-profileImage.Parent = ana
-Instance.new("UICorner", profileImage).CornerRadius = UDim.new(1, 0)
-
--- Metin kopyalama butonu oluşturan yardımcı fonksiyon
-local function createCopyButton(textToCopy, parentFrame, positionY)
-    local buttonContainer = Instance.new("Frame")
-    buttonContainer.Size = UDim2.new(0, 100, 0, 25)
-    buttonContainer.Position = UDim2.new(0.85, -100, 0, positionY) -- Sağa yaslı, text'in yanına
-    buttonContainer.BackgroundTransparency = 1
-    buttonContainer.Parent = parentFrame
-
-    local copyButton = Instance.new("TextButton")
-    copyButton.Size = UDim2.new(1, 0, 1, 0)
-    copyButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    copyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    copyButton.Font = Enum.Font.GothamBold
-    copyButton.TextSize = 13
-    copyButton.Text = "Copy"
-    Instance.new("UICorner", copyButton).CornerRadius = UDim.new(0, 5)
-    copyButton.Parent = buttonContainer
-
-    copyButton.MouseButton1Click:Connect(function()
-        setclipboard(textToCopy)
-        gonderBildirim({Title = "HilalWare", Text = "'" .. textToCopy .. "' kopyalandı!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-    end)
-
-    return copyButton
-end
-
--- Label ve yanına kopyalama butonu oluşturan fonksiyon
-local function CreateLabelWithCopy(text, value, posY)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.7, -50, 0, 25) -- Boyutu ayarlandı
-    lbl.Position = UDim2.new(0, 100, 0, posY) -- Konumu ayarlandı
-    lbl.BackgroundTransparency = 1
-    lbl.Text = text .. ": " .. value
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 15
-    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = ana
-
-    local copyBtn = createCopyButton(value, ana, posY)
-    -- Kopyalama butonunun pozisyonunu label'ın yanına ayarlama
-    copyBtn.Position = UDim2.new(lbl.Position.X.Offset + lbl.Size.X.Offset + 5, 0, lbl.Position.Y.Offset, 0)
-end
-
--- Bilgileri göster ve kopyalama butonlarını oluştur
-CreateLabelWithCopy("Oyuncu Adı", player.Name, 10)
-CreateLabelWithCopy("Oyuncu ID", player.UserId, 40)
-pcall(function()
-    local gameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
-    CreateLabelWithCopy("Oyun Adı", gameInfo.Name, 70)
-end)
-local executorName = identifyexecutor and identifyexecutor() or "Bilinmiyor" -- identifyexecutor genellikle injectörlerde bulunur
-CreateLabelWithCopy("Executor", tostring(executorName), 100)
-
--- SAĞ ÜST KÖŞE KONTROL BUTONLARI (Kapat ve Küçült/Büyüt)
-local controlsFrame = Instance.new("Frame")
-controlsFrame.Size = UDim2.new(0, 80, 0, 30) -- Boyutu ayarlandı
-controlsFrame.Position = UDim2.new(1, -90, 0, 5) -- Frame'in sağ üst köşesine göre ayarlanıyor
-controlsFrame.BackgroundTransparency = 1
-controlsFrame.Parent = frame
-
--- KAPAMA BUTONU (X)
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 30, 1, 0) -- controlsFrame'in yüksekliğine göre
-closeButton.Position = UDim2.new(1, -30, 0, 0) -- controlsFrame'in sağ ucuna yerleşiyor
-closeButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Kırmızı
-closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 14
-closeButton.Text = "X"
-Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 5)
-closeButton.Parent = controlsFrame
-
-closeButton.MouseButton1Click:Connect(function()
-    gui:Destroy()
-    gonderBildirim({Title = "HilalWare", Text = "Panel kapatıldı!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-end)
-
--- KÜÇÜLTME/BÜYÜTME BUTONU (_)
-local minimizeButton = Instance.new("TextButton")
-minimizeButton.Size = UDim2.new(0, 30, 1, 0) -- controlsFrame'in yüksekliğine göre
-minimizeButton.Position = UDim2.new(0.5, -30, 0, 0) -- controlsFrame'in ortasına yakın, kapat butonunun soluna yerleşiyor
-minimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) -- Başlangıçta gri
-minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeButton.Font = Enum.Font.GothamBold
-minimizeButton.TextSize = 14
-minimizeButton.Text = "_" -- Başlangıçta "_" simgesi
-Instance.new("UICorner", minimizeButton).CornerRadius = UDim.new(0, 5)
-minimizeButton.Parent = controlsFrame
-
-minimizeButton.MouseButton1Click:Connect(function()
-    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out) -- Animasyon süresi ve stili
-
-    if isPanelMinimized then
-        -- Panel BÜYÜTULÜYOR
-        local goal = {
-            Size = originalPanelSize,
-            Position = originalPanelPosition
-        }
-        TweenService:Create(frame, tweenInfo, goal):Play()
-
-        -- Tab bar, içerik, başlık ve logo gösteriliyor
-        tabBar.Visible = true
-        contentHolder.Visible = true
-        title.Visible = true
-        logoImage.Visible = true
-
-        -- Küçültme butonunun simgesini "_" yap
-        minimizeButton.Text = "_"
-        minimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) -- Gri renge dön
-
-        isPanelMinimized = false
-    else
-        -- Panel KÜÇÜLTULÜYOR
-        local goal = {
-            Size = minimizedPanelSize,
-            Position = minimizedPanelPosition
-        }
-        TweenService:Create(frame, tweenInfo, goal):Play()
-
-        -- Tab bar, içerik, başlık ve logo gizleniyor
-        tabBar.Visible = false
-        contentHolder.Visible = false
-        title.Visible = false
-        logoImage.Visible = false
-
-        -- Küçültme butonunun simgesini "☰" yap
-        minimizeButton.Text = "☰" -- Örnek olarak Üç Çizgi simgesi.
-        minimizeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Koyu gri renge dön
-
-        isPanelMinimized = true
-    end
-end)
-
-
--- Belirtilen sekmeyi gösteren fonksiyon
+-- Sekme Fonksiyonları
 local function showTab(tabName)
     for name, contentFrame in pairs(contentFrames) do
         contentFrame.Visible = (name == tabName)
     end
 end
 
--- Sekme butonlarını aktif/pasif yapan animasyon fonksiyonu
 local function setActiveTab(button)
-    if activeTabButton == button then return end -- Eğer zaten aktifse hiçbir şey yapma
-
+    if activeTabButton == button then return end
     local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-
-    if activeTabButton then -- Eğer daha önce aktif bir buton varsa
-        local oldButtonGoal = {
-            Size = UDim2.new(1, 0, 0, 30), -- Eski boyutuna dön
-            BackgroundColor3 = originalButtonColor -- Eski rengine dön
-        }
-        TweenService:Create(activeTabButton, tweenInfo, oldButtonGoal):Play()
+    if activeTabButton then
+        TweenService:Create(activeTabButton, tweenInfo, {BackgroundColor3 = originalButtonColor}):Play()
     end
-
-    local newButtonGoal = {
-        Size = UDim2.new(1, 10, 0, 35), -- Yeni boyutuna büyüsün
-        BackgroundColor3 = activeButtonColor -- Yeni rengine geçsin
-    }
-    TweenService:Create(button, tweenInfo, newButtonGoal):Play()
-
-    activeTabButton = button -- Yeni aktif butonu kaydet
+    TweenService:Create(button, tweenInfo, {BackgroundColor3 = activeButtonColor}):Play()
+    activeTabButton = button
 end
 
--- Tüm sekme butonlarına tıklama olaylarını bağlama
 for name, button in pairs(tabButtons) do
     button.MouseButton1Click:Connect(function()
         showTab(name)
@@ -293,420 +167,365 @@ for name, button in pairs(tabButtons) do
     end)
 end
 
--- Başlangıçta Ana Sayfa sekmesini göster ve aktif yap
-showTab("Ana Sayfa")
-setActiveTab(tabButtons["Ana Sayfa"])
-
--- Açılış bildirimi
-gonderBildirim({Title = "Hilal Ware.Lua", Text = "HilalWare Açıldı!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-
--- Başlık ve stroke rengini değiştiren animasyon
-task.spawn(function()
-    while gui.Parent do -- GUI hala ekrandaysa döngüye devam et
-        for hue = 0, 1, 0.01 do -- Renk tonunu 0'dan 1'e kadar değiştir
-            if not gui.Parent then break end -- Eğer GUI silinirse döngüden çık
-            local rgbColor = Color3.fromHSV(hue, 1, 1) -- HSV renk modelini RGB'ye çevir
-            stroke.Color = rgbColor
-            title.TextColor3 = rgbColor
-            task.wait(0.05) -- Her renk değişimi arasında küçük bir bekleme
-        end
-    end
-end)
-
--- Panel açılış animasyonu (GUI'nin ekrana gelirken gösterdiği etki)
--- GUI'nin ilk olarak gizli ve küçük başlamasını sağlar
-frame.Size = UDim2.new(0, 0, 0, 0)
-frame.Position = UDim2.new(0.5, 0, 0.4, 0)
-frame.AnchorPoint = Vector2.new(0.5, 0.5) -- Açılış animasyonunu merkezden yapabilmek için AnchorPoint'i ortalıyoruz.
-
-local initialOpenTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out) -- Animasyon bilgileri
-local initialOpenGoal = {
-    Size = originalPanelSize, -- Hedef boyut
-    Position = originalPanelPosition -- Hedef konum
-}
-TweenService:Create(frame, initialOpenTweenInfo, initialOpenGoal):Play() -- Animasyonu başlat
-
-
--- Scripts sekmesi için örnek buton
-local scriptButton = Instance.new("TextButton")
-scriptButton.Size = UDim2.new(1, 0, 0, 30)
-scriptButton.Position = UDim2.new(0, 0, 0, 0)
-scriptButton.Text = "Fe SCP-096 Script (R6 İçin)"
-scriptButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-scriptButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-scriptButton.Font = Enum.Font.GothamBold
-scriptButton.TextSize = 14
-Instance.new("UICorner", scriptButton).CornerRadius = UDim.new(0, 5)
-scriptButton.Parent = scriptsTab
-
-scriptButton.MouseButton1Click:Connect(function()
-    local success, result = pcall(function()
-        return game:HttpGet("https://pastefy.app/YsJgITXR/raw")
-    end)
-
-    if success then
-        local scriptCode = result
-        loadstring(scriptCode)() -- Loadstring'i çağırırken parantezleri unutma
-        gonderBildirim({Title = "HilalWare", Text = "Script başarıyla yüklendi!", Duration = 3, Icon = "rbxassetid://70574838265694"})
+-- KÜÇÜLTME/BÜYÜTME FONKSİYONU
+minimizeButton.MouseButton1Click:Connect(function()
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    isPanelMinimized = not isPanelMinimized
+    if isPanelMinimized then
+        TweenService:Create(frame, tweenInfo, {Size = minimizedPanelSize, Position = minimizedPanelPosition}):Play()
+        tabBar.Visible, contentHolder.Visible, title.Visible, logoImage.Visible = false, false, false, false
+        minimizeButton.Text = "☰"
     else
-        gonderBildirim({Title = "HilalWare", Text = "Script yüklenirken bir hata oluştu: " .. tostring(result), Duration = 5, Icon = "rbxassetid://70574838265694"})
+        TweenService:Create(frame, tweenInfo, {Size = originalPanelSize, Position = originalPanelPosition}):Play()
+        tabBar.Visible, contentHolder.Visible, title.Visible, logoImage.Visible = true, true, true, true
+        minimizeButton.Text = "_"
     end
 end)
 
---- Prison Life Özel Kontroller ve Kill Aura ---
-if game.PlaceId == 155615604 then -- Prison Life'ın PlaceId'si
+closeButton.MouseButton1Click:Connect(function()
+    gui:Destroy()
+    gonderBildirim({Title = "HilalWare", Text = "Panel kapatıldı!", Duration = 3, Icon = logoImage.Image})
+end)
 
-    -- Oyun Sekmesi İçine Kill Aura Ekleme
-    local killAuraContainer = Instance.new("Frame")
-    killAuraContainer.Size = UDim2.new(1, -20, 0, 30) -- Genişlik 1 tam, 20 piksel boşluk; yükseklik 30 piksel
-    killAuraContainer.Position = UDim2.new(0, 10, 0, 10) -- Sekme içinde üstten 10, soldan 10
-    killAuraContainer.BackgroundTransparency = 1
-    killAuraContainer.Parent = oyunTab -- Artık oyunTab'ın çocuğu
+-- ANA SAYFA İÇERİĞİ
+local anaSayfa = contentFrames["Ana Sayfa"]
+-- (Ana Sayfa içeriği aynı, buraya tekrar eklemiyorum, kodun geri kalanıyla birleştirilecek)
+-- ...
 
-    -- Kill Aura metin etiketi
-    local killAuraLabel = Instance.new("TextLabel")
-    killAuraLabel.Size = UDim2.new(0.6, 0, 1, 0) -- Konteynerin %60'ı genişliğinde
-    killAuraLabel.Position = UDim2.new(0, 0, 0, 0)
-    killAuraLabel.BackgroundTransparency = 1
-    killAuraLabel.Text = "Kill Aura"
-    killAuraLabel.Font = Enum.Font.GothamBold
-    killAuraLabel.TextSize = 16
-    killAuraLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    killAuraLabel.TextXAlignment = Enum.TextXAlignment.Left
-    killAuraLabel.Parent = killAuraContainer
+--- EĞLENCE SEKMESİ: OYUNCU GETİRME ---
+local eglenceTab = contentFrames["Eğlence"]
+local playerEntries = {} -- Oyuncu UI elemanlarını saklamak için
 
-    -- Aç/Kapa butonu
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0.4, 0, 1, 0) -- Konteynerin %40'ı genişliğinde
-    toggleButton.Position = UDim2.new(0.6, 0, 0, 0) -- Metin etiketinin sağına
-    toggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) -- Başlangıçta Kırmızı (Kapalı)
-    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleButton.Font = Enum.Font.GothamBold
-    toggleButton.TextSize = 14
-    toggleButton.Text = "Kapalı"
-    Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 5)
-    toggleButton.Parent = killAuraContainer
+-- Listeyi otomatik sıralamak için UIListLayout
+local playerListLayout = Instance.new("UIListLayout")
+playerListLayout.Parent = eglenceTab
+playerListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+playerListLayout.Padding = UDim.new(0, 5) -- Elemanlar arası boşluk
 
-    local killAuraEnabled = false -- Kill Aura'nın açık/kapalı durumu
-    local killAuraConnection = nil -- Loop bağlantısını tutmak için
+-- Oyuncu listesini oluşturan/güncelleyen fonksiyon
+local function updatePlayerList()
+    -- Mevcut tüm girişleri temizle
+    for targetPlayer, entry in pairs(playerEntries) do
+        entry:Destroy()
+    end
+    playerEntries = {}
+    
+    -- Oyundaki her oyuncu için yeni bir giriş oluştur
+    for _, targetPlayer in ipairs(Players:GetPlayers()) do
+        if targetPlayer ~= player then -- Kendimizi listeye eklemeyelim
+            -- Ana çerçeve (her bir oyuncu satırı için)
+            local entryFrame = Instance.new("Frame")
+            entryFrame.Name = targetPlayer.Name
+            entryFrame.Size = UDim2.new(1, -10, 0, 50)
+            entryFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            entryFrame.LayoutOrder = 1 -- Layout sıralaması için
+            entryFrame.Parent = eglenceTab
+            Instance.new("UICorner", entryFrame).CornerRadius = UDim.new(0, 6)
 
-    toggleButton.MouseButton1Click:Connect(function()
-        killAuraEnabled = not killAuraEnabled
+            -- Profil Resmi
+            local profileImage = Instance.new("ImageLabel")
+            profileImage.Size = UDim2.new(0, 40, 0, 40)
+            profileImage.Position = UDim2.new(0, 5, 0.5, -20)
+            profileImage.BackgroundTransparency = 1
+            profileImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. targetPlayer.UserId .. "&width=100&height=100&format=png"
+            profileImage.Parent = entryFrame
+            Instance.new("UICorner", profileImage).CornerRadius = UDim.new(1, 0) -- Daire şeklinde
 
-        if killAuraEnabled then
-            toggleButton.Text = "Açık"
-            toggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50) -- Yeşil (Açık)
+            -- Görünen Ad (DisplayName)
+            local displayNameLabel = Instance.new("TextLabel")
+            displayNameLabel.Size = UDim2.new(0.6, -60, 0.5, 0)
+            displayNameLabel.Position = UDim2.new(0, 50, 0, 0)
+            displayNameLabel.BackgroundTransparency = 1
+            displayNameLabel.Font = Enum.Font.GothamBold
+            displayNameLabel.TextSize = 14
+            displayNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            displayNameLabel.Text = targetPlayer.DisplayName
+            displayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            displayNameLabel.Parent = entryFrame
 
-            -- Kill Aura kodunu başlat
-            killAuraConnection = RunService.RenderStepped:Connect(function()
-                for i, e in pairs(Players:GetChildren()) do
-                    if e ~= Players.LocalPlayer and e.Character and e.Character:FindFirstChildOfClass("Humanoid") then
-                        local meleeEvent = ReplicatedStorage:FindFirstChild("meleeEvent") -- meleeEvent'ı güvenli bir şekilde bulmaya çalış
-                        if meleeEvent and meleeEvent:IsA("RemoteEvent") then -- RemoteEvent olduğundan emin ol
-                            pcall(function()
-                                meleeEvent:FireServer(e)
-                            end)
-                        end
-                    end
+            -- Kullanıcı Adı (@Username)
+            local usernameLabel = Instance.new("TextLabel")
+            usernameLabel.Size = UDim2.new(0.6, -60, 0.5, 0)
+            usernameLabel.Position = UDim2.new(0, 50, 0.5, 0)
+            usernameLabel.BackgroundTransparency = 1
+            usernameLabel.Font = Enum.Font.Gotham
+            usernameLabel.TextSize = 12
+            usernameLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+            usernameLabel.Text = "@" .. targetPlayer.Name
+            usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            usernameLabel.Parent = entryFrame
+            
+            -- Getir Butonu
+            local bringButton = Instance.new("TextButton")
+            bringButton.Size = UDim2.new(0, 60, 0, 30)
+            bringButton.Position = UDim2.new(1, -65, 0.5, -15)
+            bringButton.BackgroundColor3 = Color3.fromRGB(80, 80, 150)
+            bringButton.Font = Enum.Font.GothamBold
+            bringButton.Text = "Getir"
+            bringButton.TextSize = 14
+            bringButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            bringButton.Parent = entryFrame
+            Instance.new("UICorner", bringButton).CornerRadius = UDim.new(0, 5)
+
+            bringButton.MouseButton1Click:Connect(function()
+                local localRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                local targetRoot = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+                if localRoot and targetRoot then
+                    -- Hedef oyuncunun CFrame'ini kendi karakterimizin 2 stud önüne ayarla
+                    targetRoot.CFrame = localRoot.CFrame * CFrame.new(0, 0, -2)
+                    gonderBildirim({
+                        Title = "HilalWare", 
+                        Text = targetPlayer.DisplayName .. " yanına getirildi!", 
+                        Duration = 3, 
+                        Icon = logoImage.Image
+                    })
+                else
+                    gonderBildirim({
+                        Title = "HilalWare", 
+                        Text = "Oyuncu getirilemedi (karakter bulunamadı).", 
+                        Duration = 3,
+                        Icon = logoImage.Image
+                    })
                 end
             end)
-            gonderBildirim({Title = "HilalWare", Text = "Kill Aura Aktif Edildi!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-        else
-            toggleButton.Text = "Kapalı"
-            toggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) -- Kırmızı (Kapalı)
-
-            -- Kill Aura kodunu durdur
-            if killAuraConnection then
-                killAuraConnection:Disconnect()
-                killAuraConnection = nil
-            end
-            gonderBildirim({Title = "HilalWare", Text = "Kill Aura Kapatıldı!", Duration = 3, Icon = "rbxassetid://70574838265694"})
+            
+            playerEntries[targetPlayer] = entryFrame
         end
-    end)
+    end
 end
 
--- Eğer Prison Life ise, Oyun sekmesine Criminal Tp butonu ekle
+-- Oyuncu katıldığında veya ayrıldığında listeyi güncelle
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
+-- Başlangıçta listeyi doldur
+updatePlayerList()
+
+
+-- (Diğer sekmelerin içeriği ve fonksiyonları burada devam ediyor...)
+-- ANA SAYFA İÇERİĞİ (Yukarıda boş bırakılan kısım)
+local anaSayfa = contentFrames["Ana Sayfa"]
+
+local profileImage = Instance.new("ImageLabel")
+profileImage.Size = UDim2.new(0, 80, 0, 80)
+profileImage.Position = UDim2.new(0, 10, 0, 10)
+profileImage.BackgroundTransparency = 1
+profileImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=100&height=100&format=png"
+profileImage.Parent = anaSayfa
+Instance.new("UICorner", profileImage).CornerRadius = UDim.new(1, 0)
+
+local function createInfoLabel(text, value, posY)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -100, 0, 25)
+    lbl.Position = UDim2.new(0, 100, 0, posY)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text .. ": " .. tostring(value)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 15
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = anaSayfa
+end
+
+createInfoLabel("Oyuncu Adı", player.Name, 10)
+createInfoLabel("Oyuncu ID", player.UserId, 40)
 pcall(function()
-    local placeId = game.PlaceId
-    local prisonLifeId = 155615604 -- Prison Life oyun ID'si
-
-    if placeId == prisonLifeId then
-        local criminalTpButton = Instance.new("TextButton")
-        criminalTpButton.Size = UDim2.new(0, 200, 0, 30)
-        criminalTpButton.Position = UDim2.new(0, 10, 0, 80) -- Kill Aura'nın altına ayarlayabilirsin
-        criminalTpButton.Text = "Suçlu Tp"
-        criminalTpButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        criminalTpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        criminalTpButton.Font = Enum.Font.GothamBold
-        criminalTpButton.TextSize = 14
-        criminalTpButton.Parent = oyunTab
-
-        Instance.new("UICorner", criminalTpButton).CornerRadius = UDim.new(0, 5)
-
-        criminalTpButton.MouseButton1Click:Connect(function()
-            local character = player.Character or player.CharacterAdded:Wait()
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                rootPart.CFrame = CFrame.new(-976.1104125976562, 109.32378387451172, 2070.099853515625)
-                gonderBildirim({Title = "HilalWare", Text = "Suçlu bölgesine ışınlandın!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-            end
-        end)
-    end
+    local gameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
+    createInfoLabel("Oyun Adı", gameInfo.Name, 70)
 end)
+createInfoLabel("Executor", identifyexecutor and identifyexecutor() or "Bilinmiyor", 100)
 
--- Eğer Prison Life ise, Oyun sekmesine Criminal Tp butonu ekle
-pcall(function()
-    local placeId = game.PlaceId
-    local prisonLifeId = 155615604 -- Prison Life oyun ID'si
-
-    if placeId == prisonLifeId then
-        local criminalTpButton = Instance.new("TextButton")
-        criminalTpButton.Size = UDim2.new(0, 200, 0, 30)
-        criminalTpButton.Position = UDim2.new(0, 10, 0, 40) -- Kill Aura'nın altına ayarlayabilirsin
-        criminalTpButton.Text = "Polis Tp"
-        criminalTpButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        criminalTpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        criminalTpButton.Font = Enum.Font.GothamBold
-        criminalTpButton.TextSize = 14
-        criminalTpButton.Parent = oyunTab
-
-        Instance.new("UICorner", criminalTpButton).CornerRadius = UDim.new(0, 5)
-
-        criminalTpButton.MouseButton1Click:Connect(function()
-            local character = player.Character or player.CharacterAdded:Wait()
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                rootPart.CFrame = CFrame.new(826.0164184570312, 99.72432708740234, 2264.603271484375)
-                gonderBildirim({Title = "HilalWare", Text = "Polis bölgesine ışınlandın!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-            end
-        end)
+local function createButton(text, position, parent, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 140, 0, 30)
+    btn.Position = position
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Text = text
+    btn.Parent = parent
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+    if callback then
+        btn.MouseButton1Click:Connect(callback)
     end
-end)
+    return btn
+end
 
--- Eğer Prison Life ise, Oyun sekmesine Criminal Tp butonu ekle
-pcall(function()
-    local placeId = game.PlaceId
-    local prisonLifeId = 155615604 -- Prison Life oyun ID'si
-
-    if placeId == prisonLifeId then
-        local criminalTpButton = Instance.new("TextButton")
-        criminalTpButton.Size = UDim2.new(0, 200, 0, 30)
-        criminalTpButton.Position = UDim2.new(0, 10, 0, 120)
-        criminalTpButton.Text = "Mahkum Tp"
-        criminalTpButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        criminalTpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        criminalTpButton.Font = Enum.Font.GothamBold
-        criminalTpButton.TextSize = 14
-        criminalTpButton.Parent = oyunTab
-
-        Instance.new("UICorner", criminalTpButton).CornerRadius = UDim.new(0, 5)
-
-        criminalTpButton.MouseButton1Click:Connect(function()
-            local character = player.Character or player.CharacterAdded:Wait()
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                rootPart.CFrame = CFrame.new(877.7210083007812, 99.98999786376953, 2359.46826171875)
-                gonderBildirim({Title = "HilalWare", Text = "Mahkum bölgesine ışınlandın!", Duration = 3, Icon = "rbxassetid://70574838265694"})
-            end
-        end)
-    end
-end)
-
-local ana = contentFrames["Ana Sayfa"] -- Ana Sayfa içeriğine erişiyoruz
-
-local resetButton = Instance.new("TextButton")
-resetButton.Size = UDim2.new(0, 200, 0, 30)
-resetButton.Position = UDim2.new(0, 20, 0, 140) -- Profilin altına konumlandırdım
-resetButton.Text = "Sıfırla (Reset)"
-resetButton.BackgroundColor3 = Color3.fromRGB(80, 60, 60)
-resetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetButton.Font = Enum.Font.GothamBold
-resetButton.TextSize = 14
-resetButton.Parent = ana
-
-Instance.new("UICorner", resetButton).CornerRadius = UDim.new(0, 5)
-
-resetButton.MouseButton1Click:Connect(function()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.Health = 0 -- Oyuncuyu resetliyoruz
-        gonderBildirim({Title = "HilalWare", Text = "Karakter sıfırlandı!", Duration = 2, Icon = "rbxassetid://70574838265694"})
-    else
-        gonderBildirim({Title = "HilalWare", Text = "Humanoid bulunamadı!", Duration = 2})
-    end
-end)
-
-local ana = contentFrames["Ana Sayfa"]
-local TeleportService = game:GetService("TeleportService")
-
--- Sıfırla Butonu
-local resetButton = Instance.new("TextButton")
-resetButton.Size = UDim2.new(0, 150, 0, 30)
-resetButton.Position = UDim2.new(0, 20, 0, 140)
-resetButton.Text = "Sıfırla (Reset)"
-resetButton.BackgroundColor3 = Color3.fromRGB(80, 60, 60)
-resetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetButton.Font = Enum.Font.GothamBold
-resetButton.TextSize = 14
-resetButton.Parent = ana
-Instance.new("UICorner", resetButton).CornerRadius = UDim.new(0, 5)
-
-resetButton.MouseButton1Click:Connect(function()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
+createButton("Sıfırla (Reset)", UDim2.new(0, 20, 0, 140), anaSayfa, function()
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         humanoid.Health = 0
-        gonderBildirim({Title = "HilalWare", Text = "Karakter sıfırlandı!", Duration = 2, Icon = "rbxassetid://70574838265694"})
-    else
-        gonderBildirim({Title = "HilalWare", Text = "Humanoid bulunamadı!", Duration = 2})
+        gonderBildirim({Title = "HilalWare", Text = "Karakter sıfırlandı!", Duration = 2, Icon = logoImage.Image})
     end
 end)
 
--- Rejoin Butonu
-local rejoinButton = Instance.new("TextButton")
-rejoinButton.Size = UDim2.new(0, 150, 0, 30)
-rejoinButton.Position = UDim2.new(0, 180, 0, 140) -- Sıfırla'nın sağına
-rejoinButton.Text = "Yeniden Katıl"
-rejoinButton.BackgroundColor3 = Color3.fromRGB(60, 80, 60)
-rejoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-rejoinButton.Font = Enum.Font.GothamBold
-rejoinButton.TextSize = 14
-rejoinButton.Parent = ana
-Instance.new("UICorner", rejoinButton).CornerRadius = UDim.new(0, 5)
-
-rejoinButton.MouseButton1Click:Connect(function()
-    gonderBildirim({Title = "HilalWare", Text = "Yeniden bağlanılıyor...", Duration = 2})
+createButton("Yeniden Katıl", UDim2.new(0, 170, 0, 140), anaSayfa, function()
+    gonderBildirim({Title = "HilalWare", Text = "Yeniden bağlanılıyor...", Duration = 2, Icon = logoImage.Image})
     TeleportService:Teleport(game.PlaceId, player)
 end)
 
-
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-pcall(function()
-    local placeId = game.PlaceId
-    local prisonLifeId = 155615604 -- Prison Life ID'si
-
-    if placeId == prisonLifeId then
-        -- Buton oluştur
-        local doorsSilButton = Instance.new("TextButton")
-        doorsSilButton.Size = UDim2.new(0, 200, 0, 30)
-        doorsSilButton.Position = UDim2.new(0, 10, 0, 160) -- Belirttiğin konum
-        doorsSilButton.Text = "Kapıları Sil"
-        doorsSilButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        doorsSilButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        doorsSilButton.Font = Enum.Font.GothamBold
-        doorsSilButton.TextSize = 14
-        doorsSilButton.Parent = oyunTab -- Oyun sekmesine ekliyoruz
-
-        Instance.new("UICorner", doorsSilButton).CornerRadius = UDim.new(0, 5)
-
-        -- Silme fonksiyonu
-        local function doorsSil()
-            local doors = workspace:FindFirstChild("Doors")
-            if doors then
-                for _, obj in ipairs(doors:GetChildren()) do
-                    obj:Destroy()
-                end
-                doors:Destroy()
-                print("Kapılar silindi.")
-            else
-                warn("Doors klasörü bulunamadı.")
-            end
-        end
-
-        -- Butona tıklama
-        doorsSilButton.MouseButton1Click:Connect(function()
-            doorsSil()
-            doorsSilButton.Text = "Çalıştı"
-        end)
+-- SCRIPTS SEKMESİ İÇERİĞİ
+local scriptsTab = contentFrames["Scripts"]
+createButton("FE SCP-096 Script", UDim2.new(0, 10, 0, 10), scriptsTab, function()
+    local success, result = pcall(function()
+        return game:HttpGet("https://pastefy.app/YsJgITXR/raw")
+    end)
+    if success and result then
+        loadstring(result)()
+        gonderBildirim({Title = "HilalWare", Text = "Script başarıyla yüklendi!", Duration = 3, Icon = logoImage.Image})
+    else
+        gonderBildirim({Title = "HilalWare", Text = "Script yüklenemedi: " .. tostring(result), Duration = 5, Icon = logoImage.Image})
     end
-end)
+end).Size = UDim2.new(1, -20, 0, 30)
 
-
---Yeni Ölümsüzlük 2 saatimi aldı v2
-
----
-
----
-
----
-
----
-
----
-
----
-
-if game.PlaceId == 155615604 then -- Sadece Prison Life'da çalışsın
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local remote = game.Workspace:WaitForChild("Remote")
+-- OYUN SEKMESİ (PRISON LIFE ÖZEL)
+if game.PlaceId == PRISON_LIFE_ID then
+    local oyunTab = contentFrames["Oyun"]
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 5)
+    listLayout.Parent = oyunTab
     
-    local savedCFrame = nil
-    local immortalityOn = false
-    local immortalityLoop = nil
+    local function createGameButton(text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -20, 0, 30)
+        btn.Position = UDim2.new(0, 10, 0, 0)
+        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 14
+        btn.Text = text
+        btn.Parent = oyunTab
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+        if callback then
+            btn.MouseButton1Click:Connect(callback)
+        end
+        return btn
+    end
 
-    -- Ölümsüzlük Aç
-    local function startImmortality()
-        immortalityOn = true
-        immortalityLoop = task.spawn(function()
-            while immortalityOn do
-                task.wait(2)
-
-                -- Konumu kaydet
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    savedCFrame = player.Character.HumanoidRootPart.CFrame
+    local function createGameToggleButton(text, callback)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, -20, 0, 30)
+        container.Position = UDim2.new(0, 10, 0, 0)
+        container.BackgroundTransparency = 1
+        container.Parent = oyunTab
+    
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.6, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 16
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = container
+    
+        local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Size = UDim2.new(0.4, 0, 1, 0)
+        toggleBtn.Position = UDim2.new(0.6, 0, 0, 0)
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+        toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggleBtn.Font = Enum.Font.GothamBold
+        toggleBtn.TextSize = 14
+        toggleBtn.Text = "Kapalı"
+        toggleBtn.Parent = container
+        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 5)
+    
+        local enabled = false
+        toggleBtn.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            toggleBtn.Text = enabled and "Açık" or "Kapalı"
+            toggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+            callback(enabled)
+        end)
+    end
+    
+    local killAuraConnection
+    createGameToggleButton("Kill Aura", function(enabled)
+        if enabled then
+            killAuraConnection = RunService.RenderStepped:Connect(function()
+                local meleeEvent = ReplicatedStorage:FindFirstChild("meleeEvent")
+                if not meleeEvent then return end
+                for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character then
+                        pcall(function() meleeEvent:FireServer(otherPlayer) end)
+                    end
                 end
+            end)
+            gonderBildirim({Title = "HilalWare", Text = "Kill Aura Aktif!", Duration = 3, Icon = logoImage.Image})
+        else
+            if killAuraConnection then killAuraConnection:Disconnect() end
+            gonderBildirim({Title = "HilalWare", Text = "Kill Aura Kapatıldı.", Duration = 3, Icon = logoImage.Image})
+        end
+    end)
 
-                -- Takımı tekrar ayarla (respawn tetikler)
-                remote.TeamEvent:FireServer("Bright orange")
-
-                -- Yeni karakter geldiyse eski konuma ışınla
-                local newChar = player.CharacterAdded:Wait()
-                local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
-                if hrp and savedCFrame then
-                    hrp.CFrame = savedCFrame
-                end
-
-                -- Konumu sıfırla
-                savedCFrame = nil
+    local function createTpButton(text, positionVector)
+        createGameButton(text, function()
+            local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                rootPart.CFrame = CFrame.new(positionVector)
+                gonderBildirim({Title = "HilalWare", Text = text .. " bölgesine ışınlandın!", Duration = 3, Icon = logoImage.Image})
             end
         end)
     end
-
-    -- Ölümsüzlük Kapat
-    local function stopImmortality()
-        immortalityOn = false
-        if immortalityLoop then
-            task.cancel(immortalityLoop)
+    
+    createTpButton("Polis TP", Vector3.new(826, 100, 2264))
+    createTpButton("Suçlu TP", Vector3.new(-976, 109, 2070))
+    createTpButton("Mahkum TP", Vector3.new(877, 100, 2359))
+    
+    createGameButton("Kapıları Sil", function()
+        local doors = workspace:FindFirstChild("Doors")
+        if doors then
+            doors:Destroy()
+            gonderBildirim({Title = "HilalWare", Text = "Kapılar silindi.", Duration = 3, Icon = logoImage.Image})
         end
-    end
-
-    -- GUI ve Buton Oluştur
-    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-    ScreenGui.Name = "ImmortalityGui"
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 200, 0, 50)
-    button.Position = UDim2.new(0.5, -100, 0.8, 0)
-    button.Text = "Ölümsüzlük: Kapalı"
-    button.Parent = ScreenGui
-    button.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.Font = Enum.Font.SourceSansBold
-    button.TextSize = 22
-
-    button.MouseButton1Click:Connect(function()
-        immortalityOn = not immortalityOn
-        if immortalityOn then
-            button.Text = "Ölümsüzlük: Açık"
-            button.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-            startImmortality()
+    end)
+    
+    local godmodeConnection
+    createGameToggleButton("Ölümsüzlük", function(enabled)
+        if enabled then
+            local savedTeam, savedCFrame = player.Team
+            godmodeConnection = RunService.Heartbeat:Connect(function()
+                if player.Character and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                    savedCFrame = player.Character.HumanoidRootPart.CFrame
+                else
+                    player.CharacterAdded:Wait().Humanoid.Died:Connect(function()
+                        task.wait(0.1)
+                        player.Team = savedTeam
+                        local newChar = player.Character or player.CharacterAdded:Wait()
+                        if newChar and savedCFrame then
+                            newChar:WaitForChild("HumanoidRootPart").CFrame = savedCFrame
+                        end
+                    end)
+                end
+            end)
+            gonderBildirim({Title = "HilalWare", Text = "Ölümsüzlük açıldı!", Duration = 3, Icon = logoImage.Image})
         else
-            button.Text = "Ölümsüzlük: Kapalı"
-            button.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-            stopImmortality()
+            if godmodeConnection then godmodeConnection:Disconnect() end
+            gonderBildirim({Title = "HilalWare", Text = "Ölümsüzlük kapandı.", Duration = 3, Icon = logoImage.Image})
         end
     end)
 end
+
+
+-- BAŞLANGIÇ ANİMASYONLARI
+task.spawn(function()
+    while gui.Parent do
+        for hue = 0, 1, 0.01 do
+            if not gui.Parent then break end
+            local rgbColor = Color3.fromHSV(hue, 0.8, 1)
+            stroke.Color = rgbColor
+            title.TextColor3 = rgbColor
+            task.wait(0.05)
+        end
+    end
+end)
+
+local openTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+TweenService:Create(frame, openTweenInfo, {Size = originalPanelSize, Position = originalPanelPosition}):Play()
+
+showTab("Ana Sayfa")
+setActiveTab(tabButtons["Ana Sayfa"])
+gonderBildirim({Title = "Hilal Ware.Lua", Text = "HilalWare Açıldı!", Duration = 3, Icon = logoImage.Image})
+
+--sa
